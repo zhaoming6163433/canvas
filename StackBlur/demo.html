@@ -1,0 +1,105 @@
+<!doctype html>
+
+<html>
+    <head>
+        <title>StackBlur Demo</title>
+        <style>
+            html, body {
+                padding: 0;
+                margin: 0;
+                text-align: center;
+                background: #fff;
+                font-family: Arial, sans-serif;
+                color: #333;
+            }
+
+            canvas {
+                border: #fff solid 4px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, .3);
+                vertical-align: middle;
+            }
+
+            div {
+                margin: 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>StackBlur Demo</h1>
+        <canvas id="canvas" width="200" height="200"></canvas>
+        <div>
+            <input type="range" min="0" max="50" value="0" id="slider" />
+        </div>
+        <script src="dist/stackblur.js"></script>
+        <script>
+            // Canvas
+            var canvas = document.getElementById("canvas");
+            var cctx = canvas.getContext("2d");
+            var buff = document.createElement("canvas");
+            buff.width = canvas.width;
+            buff.height = canvas.height;
+            var bctx = buff.getContext("2d");
+
+            bctx.fillStyle = "#eee";
+            bctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            bctx.fillStyle = "#08f";
+            bctx.fillRect(30, 30, 120, 90);
+
+            bctx.fillStyle = "#f04";
+            bctx.beginPath();
+            bctx.arc(120, 120, 50, 0, 2*Math.PI);
+            bctx.fill();
+
+            cctx.drawImage(buff, 0, 0);
+
+            // Slider
+            //StackBlur.image(sourceImage, targetCanvas, radius, blurAlphaChannel); 
+            // sourceImage：HTMLImageElement或者它的id
+            // targetCanvas：HTMLCanvasElement或者它的id
+            // radius：模糊半径
+            // blurAlphaChannel： 如果你想模糊一个 RGBA 的图像，就将其设置为true（可选，默认 =false）
+            // RGBA Canvas 作为源:
+
+            // StackBlur.canvasRGBA(targetCanvas, top_x, top_y, width, height, radius); 
+            // targetCanvas:HTMLCanvasElement
+            // top_x: 要模糊的矩形的左上角的水平坐标
+            // top_y: 要模糊的矩形的左上角的垂直坐标
+            // width: 要模糊的矩形宽度
+            // height: 要模糊的矩形高度
+            // radius: 模糊半径
+            // RGB Canvas 作为源:
+
+            // StackBlur.canvasRGB(targetCanvas, top_x, top_y, width, height, radius); 
+            // targetCanvas:HTMLCanvasElement
+            // top_x: 要模糊的矩形的左上角的水平坐标
+            // top_y: 要模糊的矩形的左上角的垂直坐标
+            // width: 要模糊的矩形宽度
+            // height:要模糊的矩形高度
+            // radius: 模糊半径
+            // RGBA ImageData 作为源:
+
+            // StackBlur.imageDataRGBA(imageData, top_x, top_y, width, height, radius); 
+            // imageData: canvas 的ImageData
+            // top_x：要模糊的矩形的左上角的水平坐标
+            // top_y: 要模糊的矩形的左上角的垂直坐标
+            // width: 要模糊的矩形宽度
+            // height: 要模糊的矩形高度
+            // radius: 模糊半径
+            // RGB ImageData 作为源:
+
+            // StackBlur.imageDataRGB(imageData, top_x, top_y, width, height, radius); 
+            // imageData: canvas 的ImageData
+            // top_x：要模糊的矩形的左上角的水平坐标
+            // top_y: 要模糊的矩形的左上角的垂直坐标
+            // width: 要模糊的矩形宽度
+            // height: 要模糊的矩形高度
+            // radius: 模糊半径
+            var slider = document.getElementById("slider");
+            slider.addEventListener("change", function() {
+                cctx.drawImage(buff, 0, 0);
+                StackBlur.canvasRGB(canvas, 0, 0, canvas.width, canvas.height, slider.value);
+            }, false);
+        </script>
+    </body>
+</html>
