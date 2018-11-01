@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script>
+    //采用667/375的画布
+    function setcanvas(){
+        var oC = document.getElementById('canvas');
+        //图片缩放比例
+        oC.scaleratio = 1;
+        //屏幕比例系数
+        var scaleserise = 375/667;
+        //屏幕宽度
+        var innerw = document.documentElement.clientWidth;
+        //屏幕高度
+        var innerh = document.documentElement.clientHeight;
+        //canvas宽度最多不超过700
+        var canvasw = document.documentElement.clientWidth>700?700:document.documentElement.clientWidth;
+        //canvas高度
+        var canvash = oC.width*(1/scaleserise);
+        if(innerw/innerh>scaleserise){
+            oC.height = innerh;
+            oC.width = innerh*scaleserise;
+            oC.scaleratio = oC.width/375*0.8;
+        }else{
+            oC.width = innerw;
+            oC.height = innerw*(1/scaleserise);
+            var margintop = (innerh - oC.height)/2;
+            oC.scaleratio = oC.height/667*0.8;
+            //设置canvas垂直居中
+            oC.setAttribute('style', 'margin-top: '+margintop+'px');
+        }
+    }
+    window.onresize = function(){
+        window.requestAnimationFrame(function () {
+            setcanvas();
+        });
+    }
+    window.onload = function(){
+        var requestAnimFrame = (function() {
+            return window.requestAnimationFrame || (window).webkitRequestAnimationFrame || (window).mozRequestAnimationFrame || (window).oRequestAnimationFrame || window.msRequestAnimationFrame || function(G) {
+                window.setTimeout(G, 1000 / 60, new Date().getTime());
+            };
+        })();
+
+        var oC = document.getElementById('canvas');
+
+        var oGC = oC.getContext('2d');
+        //游戏默认设置
+        var gamesetdefault = {
+            gamespeed : 1.2 //总体速度
+        }
+
+        setcanvas();
+
+        oGC.fillStyle = "#000000";
+
+        oGC.fillRect(0,0,oC.width,oC.height);
+
+        //图片对象
+        var imgobj = {
+            "mofa":"img/mofa.png",
+            "yuzhou":"img/background0.jpg",
+            "renwu":"img/tuzi.png",
+            "way":"img/way.png"
+        };
+
+        //加载后的图片对象
+        var loadedimgobj = {};
+
+        //背景构造函数
+        function BackImg(){}
+        BackImg.prototype = {
+            init: function () {
+                this.backx = 0;//背景x位置
+                this.backy = 0;//背景y位置
+                this.down = true;//背景初始化运动方向上
+                this.right = true;//背景初始化运动方向右
+            },
+            main: function(){
+                //移动背景位置
+                this.moveback(loadedimgobj.yuzhou);
+                //画背景
+                this.drawback(loadedimgobj.yuzhou);
+            },
+            drawback: function(yuzhou){
+                var innerw = oC.width;
+                var innerh = oC.height;
+                oGC.drawImage(yuzhou,0,0,yuzhou.width,yuzhou.height,this.backx,this.backy,oC.height*2,oC.height*2);
+            },
+            moveback: function(yuzhou){
+                if(this.backy >= 0){
+                    this.backy = -oC.height;
+                }
+                this.backy+=3*gamesetdefault.gamespeed;
+            }
+        }
+
+        //爆炸构造函数
+        function BaoZha() {};
+        BaoZha.prototype = {
+            init: function () { //基本配置
+                this.speed = 2*gamesetdefault.gamespeed;//爆炸速度
+                this.imgcutx = 0;//x图片切图位置初始值
+                this.imgcuty = 0;//y图片切图位置初始值
+                this.positionx = 0;//x偏移量初始值
+                this.positiony = 0;//y偏移量初始值
+                this.size = 200;//图片初始化大小
+                this.ranum = 1;//随机数量初始化
+                this.catchy = -1;//缓存图片标识
+                this.imgspeed = 0;//图片切换速度初始化
+                this._px = [];//x坐标数组
+                this._py = [];//y坐标数组
+                this.newpyarr = [];//最终处理后的数组
+                this.randomsize = [];//随机大小
+                this._postionarr = [];//最终点的对象数组
+            },
+            changeimg:function(){
+                //判断图片切换
+                this.imgcutx++;
+                if(this.imgcutx == 5){
+                    this.imgcutx = 0;
+                    this.imgcuty++;
+                    this.catchy = this.imgcuty;
+                    if(this.imgcuty == 5){
+                        this.imgcuty = 0;
+                    }
+                }
+            },
+            randomboomnum:function(){
+                //随机爆炸数量
+                this.ranum = Math.ceil(Math.random()*10);
+                for(var i=0;i<this.ranum;i++){
+                    this._px[i] = Math.random()*500;
+                    this._py[i] = Math.random()*500;
+                    var randsd = Math.random();
+                    this.randomsize[i] = randsd*this.size<100?100:randsd*this.size;
+                }
+            },
+            cutoverlay:function(){
+                //把点转换对象
+                for(var i=0;i<this.ranum;i++){
+                    var _obj = {x:this._px[i],y:this._py[i]};
+                    this._postionarr.push(_obj);
+                }
+                //比较哪几个|x1-x2|<img.width()&&|y1-y2|<img.height()
+                for(var j=0;j<this.ranum;j++){
+                    var _obj = this._postionarr[j];
+                    var isflag = false;
+                    for(var n=j+1;n<this.ranum;n++){
+                        var absx = Math.abs(this._postionarr[n].x-this._postionarr[j].x);
+                        var absy = Math.abs(this._postionarr[n].y-this._postionarr[j].y);
+                        var pianyi = (this.randomsize[j]>this.randomsize[n])?this.randomsize[j]:this.randomsize[n];
+                        if(absx<pianyi && absy<pianyi){
+                            isflag = true;
+                        }
+                    }
+                    if(!isflag){
+                        this.newpyarr.push(_obj);
+                    }
+                }
+            },
+            main: function () {
+                //控制图片切换速度
+                this.imgspeed++;
+                //如果不是当前这一组图片就重新生成随机点
+                if(this.catchy!=this.imgcuty){
+                    this.newpyarr = [];
+                    this.randomsize = [];
+
+                    //随机爆炸数量
+                    this.randomboomnum();
+
+                    //缓存当前切图标识
+                    this.catchy = this.imgcuty;
+                    
+                    //去掉叠加的
+                    this.cutoverlay();
+                }
+
+                //循环画n个爆炸
+                for(var j=0;j<this.newpyarr.length;j++){
+                    oGC.drawImage(loadedimgobj.mofa,this.imgcutx*102.4,this.imgcuty*102.4,100,100,this.positionx+this.newpyarr[j]&&this.newpyarr[j].x,this.positiony+this.newpyarr[j]&&this.newpyarr[j].y,this.randomsize[j],this.randomsize[j]);
+                }
+                
+                //自定义图片变换速度
+                if(this.imgspeed>this.speed){
+                    //判断第几张图片切换图片
+                    this.changeimg();
+                    this.imgspeed = 0;
+                }
+            }
+        }
+        //人物构造函数
+        function RenWu(){};
+        RenWu.prototype = {
+            init: function(){
+                this.imgcutx = 0;//x图片切图位置初始值
+                this.imgcuty = 1;//y图片切图位置初始值
+                this.positionx = 0;//x偏移量初始值
+                this.positiony = 0;//y偏移量初始值
+                this.imgspeed = 0;//图片切换速度初始化
+                this.speed = 7/gamesetdefault.gamespeed;//速度
+            },
+            changeimg:function(){
+                //判断图片切换
+                this.imgcutx++;
+                if(this.imgcutx == 4){
+                    this.imgcutx = 0;
+                }
+            },
+            main: function(){
+                //控制图片切换速度
+                this.imgspeed++;
+                var positionx = oC.width/2-oC.scaleratio*154/2;
+                var positiony = oC.height/2-oC.scaleratio*198/2;
+                oGC.drawImage(loadedimgobj.renwu,this.imgcutx*154,this.imgcuty*198,154,198,positionx,positiony,oC.scaleratio*154,oC.scaleratio*198);
+                //自定义图片变换速度
+                if(this.imgspeed>this.speed){
+                    //判断第几张图片切换图片
+                    this.changeimg();
+                    this.imgspeed = 0;
+                }
+            }
+        }
+        //道路的构造函数
+        function Way(){};
+        Way.prototype = {
+            init: function(){
+                this.speed = 1*gamesetdefault.gamespeed;//速度
+                this.move = 200;
+                this.scaleindex = 0;
+            },
+            main: function(){
+                var pic = loadedimgobj.way;
+                //画第一段路
+                // for(var j=3;j<7;j++){
+                //     var oldpx = 2*222;
+                //     var oldpy = j*42;
+                //     var oldw = 222;
+                //     var oldh = 42;
+                //     var newpx =  oC.width/3+oC.scaleratio*(0.36*222-j*j*1.5+j*j*j*0.1);
+                //     var newpy = oC.height/3.55+oC.scaleratio*(j*j*5-j*j*j*0.28);
+                //     var neww = oC.scaleratio*222*(0.14*j-0.017*j*j+0.001*j*j*j);
+                //     var newh = oC.scaleratio*42*(0.07+0.2*j);
+                //     oGC.drawImage(pic,oldpx,oldpy,oldw,oldh,newpx,newpy,neww,newh);
+                // }
+                //画第二段路
+                this.scaleindex++;
+                var wayscaleserise = 200/(200+this.scaleindex);
+                for(var index=0;index<8;index++){
+                    var oldpx = 1*222;
+                    var oldpy = index*42;
+                    var oldw = 222;
+                    var oldh = 42;
+                    var newpx = (oC.width/5+oC.scaleratio*(0.5*222-index*index*1.8-index*index*index*0.02))*wayscaleserise;
+                    var newpy = (oC.height/7.1+oC.scaleratio*(index*42+index*index*index*0.2))*wayscaleserise;
+                    var neww = oC.scaleratio*222*(0.5+0.06*index+index*index*0.005)*wayscaleserise;
+                    var newh = oC.scaleratio*42*(1.1+0.12*index)*wayscaleserise;
+                    
+                    newpy+=this.move;
+                    if(newpy<300){
+                        this.scaleindex = 0;
+                        newpx = (oC.width/5+oC.scaleratio*(0.5*222-index*index*1.8-index*index*index*0.02))*wayscaleserise;
+                        newpy = (oC.height/7.1+oC.scaleratio*(index*42+index*index*index*0.2))*wayscaleserise+oC.scaleratio*700;
+                        neww = oC.scaleratio*222*(0.5+0.06*index+index*index*0.005)*wayscaleserise;
+                        newh = oC.scaleratio*42*(1.1+0.12*index)*wayscaleserise;
+                        newpy+=this.move-oC.scaleratio*260;
+                    }
+                    oGC.drawImage(pic,oldpx,oldpy,oldw,oldh,newpx,newpy,neww,newh);
+                }
+                // for(var index=0;index<8;index++){
+                //     var oldpx = 0*222;
+                //     var oldpy = index*42;
+                //     var oldw = 222;
+                //     var oldh = 42;
+                //     var newpx = (oC.width/5+oC.scaleratio*(0.5*222-index*index*1.8-index*index*index*0.02)-oC.scaleratio*97)*wayscaleserise;
+                //     var newpy = (oC.scaleratio*163+oC.height/2.1+oC.scaleratio*(index*42+index*index*index*0.2))*wayscaleserise;
+                //     var neww = oC.scaleratio*222*(0.5+0.06*index+index*index*0.005)*2.6*wayscaleserise;
+                //     var newh = oC.scaleratio*42*(1.1+0.12*index)*wayscaleserise;
+
+                //     newpy+=this.move;
+                //     oGC.drawImage(pic,oldpx,oldpy,oldw,oldh,newpx,newpy,neww,newh);
+                // }
+                this.move--;
+
+            }
+        }
+
+        function draw(backimg,baozha,renwu,way){
+            //清屏
+            oGC.clearRect(0, 0, 667, 667);
+            //填充方形
+            oGC.fillRect(0,0,667,667);
+            //画背景逻辑
+            backimg.main();
+            //画路的逻辑
+            way.main();
+            //画爆炸的图片逻辑
+            //baozha.main();
+            //画人物的图片逻辑
+            renwu.main();
+            
+
+            requestAnimationFrame(function() {
+                draw(backimg,baozha,renwu,way)
+            });
+        }
+        
+        function start(){
+            var backimg = new BackImg();
+            var baozha = new BaoZha();
+            var renwu = new RenWu();
+            var way = new Way();
+            
+            //初始化背景
+            backimg.init();
+            //初始化爆炸变量
+            baozha.init();
+            //初始化人物变量
+            renwu.init();
+            //初始化直行道路
+            way.init();
+            //加载图片
+            for(var k in imgobj){
+                var loadindex = 0;
+                loadedimgobj[k] = new Image();
+                loadedimgobj[k].src = imgobj[k];
+                loadedimgobj[k].onload = function () {
+                    loadindex++;
+                    if(loadindex==3){
+                        //全部加载完开始画
+                        draw(backimg,baozha,renwu,way);
+                    }
+                }
+            }
+        }
+        start();
+    }
+    </script>
+</head>
+<body>
+    <div id="viewportdiv">
+        <canvas id="canvas"><span>不支持canvas浏览器</span></canvas>
+    </div>
+    <style>
+        html,body{
+            margin:0 0;
+        }
+        #viewportdiv{
+            height:100%;
+        }
+        #canvas{
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+</body>
+</html>

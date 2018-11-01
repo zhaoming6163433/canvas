@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script>
+        var _arr = [{
+            x: 1
+        }, {
+            x: 2
+        }, {
+            x: 2
+        }, {
+            x: 3
+        }, {
+            x: 4
+        }, {
+            x: 5
+        }];
+        var _newarr = [];
+        for (var i = 0; i < _arr.length; i++) {
+            var _obj = _arr[i];
+            var isflag = false;
+            for (var j = i+1; j < _arr.length; j++) {
+                if ((_arr[i] && _arr[i].x) == (_arr[j] && _arr[j].x)) {
+                    isflag = true;
+                }
+            }
+            if(!isflag){
+                _newarr.push(_obj);
+            }
+        }
+        console.log(_newarr);
+    </script>
+</head>
+
+<body>
+
+</body>
+
+</html>

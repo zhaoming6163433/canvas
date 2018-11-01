@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <canvas id="myCanvas" width="600" height="600"></canvas>
+    <script>
+            var myCanvas = document.querySelector("#myCanvas");
+            var ctx = myCanvas.getContext("2d");
+            function Circle(x,y,r,color){
+                this.x = x;
+                this.y = y;
+                this.r = r;
+            }
+            Circle.prototype.render = function(){
+                ctx.beginPath();
+                ctx.arc(this.x,this.y,this.r,0,Math.PI*2,true);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+            Circle.prototype.update = function(){
+                this.x +=10;
+            }
+            function Fang(x,y,w,h,color){
+                this.x = x;
+                this.y = y;
+                this.w = w;
+                this.h = h;
+                this.color = color || "orange";
+            }
+            Fang.prototype.render = function(){
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x,this.y,this.w,this.h);
+            }
+
+            var yuan = new Circle(100,100,60,"red");
+            var fang = new Fang(100,100,70,70,"green");
+
+            setInterval(function(){
+                ctx.clearRect(0,0,800,600);
+                fang.render();
+                yuan.update();
+                yuan.render();
+            },10);
+        </script>
+</body>
+</html>
