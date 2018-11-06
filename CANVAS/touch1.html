@@ -269,7 +269,8 @@
                         
                         if(startflag&&Math.abs(_x-startx)<startr/2&&Math.abs(_y-starty)<startr/2){
                             reload();
-                            window.location.href = 'http://nuxt.todaypocket.cn/blog';
+                            //目前跨域登录问题不得不用之前域名
+                            window.location.href = 'http://www.todaypocket.cn:5555/blog';
                         }
                 }
                 //刷新
